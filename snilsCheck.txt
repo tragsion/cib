@@ -1,0 +1,35 @@
+create or replace function csn(pSnils in varchar2, pBreak in integer)
+ return varchar2 is
+ i integer;
+ ctrl integer;
+ vSnils varchar2(20);
+ begin
+   if not regexp_like( pSnils, '([0-9]{3}-){2}[0-9]{3} [0-9]{2}')
+	then
+	raise value_error;
+   end if;
+   i := 1;
+   vSnils := replace( pSnils, '-', '');
+   if cast( substr( vSnils, 1, 9) as integer ) < 1001999
+     then 
+     raise value_error;
+   end if;
+   ctrl := 0;
+   while i < 10 loop
+     ctrl := (9 - i +1) * substr( vSnils, i, 1) + ctrl;
+     i := i + 1;
+   end loop;
+   ctrl := ctrl mod 101;
+   if ltrim( substr( cast ( ctrl as varchar2), -2 )) != ltrim( substr( vSnils, i) )
+     then
+     raise value_error;
+   end if;
+   vSnils := pSnils;
+   return( vSnils);
+   exception 
+     when value_error then
+        if pBreak = 1 then raise value_error;
+          else vSnils := 'incorrect';
+        end if;
+     return ( vSnils );
+ end;
